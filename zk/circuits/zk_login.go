@@ -7,20 +7,20 @@ import (
 
 type ZkLoginCircuit struct {
 	// Public inputs
-	JwtHeaderKidValue []uints.U8        `gnark:",public"`
-	DerivedHash       frontend.Variable `gnark:",public"`
-	JwtHash           frontend.Variable `gnark:",public"`
+	// JwtHeaderKidValue []uints.U8        `gnark:",public"`
+	// DerivedHash       frontend.Variable `gnark:",public"`
+	// JwtHash           frontend.Variable `gnark:",public"`
 
 	// Private inputs
-	JwtBase64    []uints.U8
-	JwtBase64Len frontend.Variable
+	JwtBase64        []uints.U8
+	JwtPayloadBase64 []uints.U8
 
-	TypOffset, AlgOffset   frontend.Variable
-	KidOffset, KidValueLen frontend.Variable
+	// TypOffset, AlgOffset   frontend.Variable
+	// KidOffset, KidValueLen frontend.Variable
 
-	IssOffset, IssValueLen frontend.Variable
-	AudOffset, AudValueLen frontend.Variable
-	SubOffset, SubValueLen frontend.Variable
+	// IssOffset, IssValueLen frontend.Variable
+	// AudOffset, AudValueLen frontend.Variable
+	// SubOffset, SubValueLen frontend.Variable
 }
 
 func (c *ZkLoginCircuit) Define(api frontend.API) error {
@@ -30,21 +30,22 @@ func (c *ZkLoginCircuit) Define(api frontend.API) error {
 	}
 
 	// 1. Decode the JWT base64 encoded string.
-	decodedJwt := decodeBase64URL(api, field, c.JwtBase64[:])
+	header := decodeBase64URL(api, field, c.JwtBase64[:MaxBase64JwtHeaderLen], 0)
+	payload := decodeBase64URL(api, field, c.JwtPayloadBase64[:], 3)
 
-	// 2. Verify the JWT content and extract the "iss", "aud" and "sub" fields.
-	ProcessJwtHeader(
-		api, decodedJwt[:MaxJwtHeaderLen],
-		c.TypOffset, c.AlgOffset,
-		c.KidOffset, c.KidValueLen, c.JwtHeaderKidValue,
-	)
+	// // 2. Verify the JWT content and extract the "iss", "aud" and "sub" fields.
+	// ProcessJwtHeader(
+	// 	api, decodedJwt[:MaxJwtHeaderLen],
+	// 	c.TypOffset, c.AlgOffset,
+	// 	c.KidOffset, c.KidValueLen, c.JwtHeaderKidValue,
+	// )
 
-	ProcessJwtPayload(
-		api, field, decodedJwt,
-		c.IssOffset, c.IssValueLen,
-		c.AudOffset, c.AudValueLen,
-		c.SubOffset, c.SubValueLen,
-	)
+	// ProcessJwtPayload(
+	// 	api, field, decodedJwt,
+	// 	c.IssOffset, c.IssValueLen,
+	// 	c.AudOffset, c.AudValueLen,
+	// 	c.SubOffset, c.SubValueLen,
+	// )
 
 	// // 3. Recompute the derived hash and compare it with the expected `DerivedHash`.
 	// sha, err := sha2.New(api)

@@ -1,8 +1,9 @@
 package circuits
 
 const (
-	MaxJwtHeaderLen = 260
-	MaxJwtLen       = MaxJwtHeaderLen + 1400
+	MaxBase64JwtHeaderLen  = 256
+	MaxBase64JwtPayloadLen = 256
+	MaxBase64JwtLen        = MaxBase64JwtHeaderLen + MaxBase64JwtPayloadLen + 1
 
 	MaxJwtHeaderKidValueLen = 64 // Google uses thumbprint which is ~40 chars
 

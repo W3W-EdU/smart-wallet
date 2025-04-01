@@ -11,33 +11,57 @@ import (
 func decodeBase64URL(
 	api frontend.API,
 	field *uints.BinaryField[uints.U32],
-	values []uints.U8,
+	bytes []uints.U8,
+	offset int,
 ) (res []uints.U8) {
-	// The input is assumed to be properly base64url encoded and thus MUST be a 4-bytes aligned.
-	for i := range len(values) / 4 {
-		first := values[i*4].Val
-		second := values[i*4+1].Val
-		third := values[i*4+2].Val
-		fourth := values[i*4+3].Val
-		firstDecoded := decodeValue(api, first)
-		secondDecoded := decodeValue(api, second)
-		thirdDecoded := decodeValue(api, third)
-		fourthDecoded := decodeValue(api, fourth)
+	// // The input is assumed to be properly base64url encoded and thus MUST be a 4-bytes aligned.
+	// for i := range len(values) / 4 {
+	// 	first := values[i*4].Val
+	// 	second := values[i*4+1].Val
+	// 	third := values[i*4+2].Val
+	// 	fourth := values[i*4+3].Val
+	// 	firstDecoded := decodeValue(api, first)
+	// 	secondDecoded := decodeValue(api, second)
+	// 	thirdDecoded := decodeValue(api, third)
+	// 	fourthDecoded := decodeValue(api, fourth)
 
-		firstDecodedBin := api.ToBinary(firstDecoded, 8)
-		secondDecodedBin := api.ToBinary(secondDecoded, 8)
-		thirdDecodedBin := api.ToBinary(thirdDecoded, 8)
-		fourthDecodedBin := api.ToBinary(fourthDecoded, 8)
+	// 	firstDecodedBin := api.ToBinary(firstDecoded, 8)
+	// 	secondDecodedBin := api.ToBinary(secondDecoded, 8)
+	// 	thirdDecodedBin := api.ToBinary(thirdDecoded, 8)
+	// 	fourthDecodedBin := api.ToBinary(fourthDecoded, 8)
 
-		aBin := append(secondDecodedBin[4:6], firstDecodedBin[0:6]...)
-		bBin := append(thirdDecodedBin[2:6], secondDecodedBin[0:4]...)
-		cBin := append(fourthDecodedBin[0:6], thirdDecodedBin[0:2]...)
+	// 	aBin := append(secondDecodedBin[4:6], firstDecodedBin[0:6]...)
+	// 	bBin := append(thirdDecodedBin[2:6], secondDecodedBin[0:4]...)
+	// 	cBin := append(fourthDecodedBin[0:6], thirdDecodedBin[0:2]...)
 
-		res = append(res,
-			field.ByteValueOf(api.FromBinary(aBin...)),
-			field.ByteValueOf(api.FromBinary(bBin...)),
-			field.ByteValueOf(api.FromBinary(cBin...)),
-		)
+	// 	res = append(res,
+	// 		field.ByteValueOf(api.FromBinary(aBin...)),
+	// 		field.ByteValueOf(api.FromBinary(bBin...)),
+	// 		field.ByteValueOf(api.FromBinary(cBin...)),
+	// 	)
+	// }
+
+	// Decode each byte and store the binary representation in big endian.
+	var bins []frontend.Variable
+	for i := offset; i < len(bytes); i++ {
+		api.Println("bytes[byteIndex].Val", bytes[i].Val)
+		decoded := decodeValue(api, bytes[i].Val)
+		api.Println("decoded", decoded)
+		bin := api.ToBinary(decoded, 6)
+		for bitIndex := range 6 {
+			bins = append(bins, bin[5-bitIndex])
+		}
+	}
+
+	// Loop over the bins and convert each 6-bit value to a byte.
+	for byteIndex := range len(bins) / 8 {
+		bin := make([]frontend.Variable, 8)
+		for bitIndex := range 8 {
+			bin[bitIndex] = bins[byteIndex*8+7-bitIndex]
+		}
+
+		c := field.ByteValueOf(api.FromBinary(bin...))
+		api.Println("c", c.Val)
 	}
 
 	return res
